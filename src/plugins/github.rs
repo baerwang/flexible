@@ -28,25 +28,19 @@ impl GitHub {
 }
 
 impl Api for GitHub {
-    fn execute(&self, token: &str) -> Result<(), anyhow::Error> {
-        let resp = client(self.repos(), self.headers(token))?;
-        let parsed_json: Value = serde_json::from_str(&resp)?;
+    fn domain(&self) -> &str {
+        "https://api.github.com"
+    }
+
+    fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error> {
+        let rsp = client(self.pull_requests(repo), self.headers(token))?;
+        let parsed_json: Value = serde_json::from_str(&rsp)?;
         if let Some(array) = parsed_json.as_array() {
             for element in array {
-                if let Some(name) = element.get("name").and_then(|name| name.as_str()) {
-                    let rsp = client(self.pull_requests(name), self.headers(token))?;
-                    let parsed_json: Value = serde_json::from_str(&rsp)?;
-                    if let Some(array) = parsed_json.as_array() {
-                        for element in array {
-                            if let Some(number) =
-                                element.get("number").and_then(|number| number.as_i64())
-                            {
-                                let rsp = client(self.reviews(name, number), self.headers(token))?;
-                                // todo
-                                println!("{}", rsp)
-                            }
-                        }
-                    }
+                if let Some(number) = element.get("number").and_then(|number| number.as_i64()) {
+                    let rsp = client(self.reviews(repo, number), self.headers(token))?;
+                    // todo
+                    println!("{}", rsp)
                 }
             }
         }
@@ -59,6 +53,10 @@ impl Api for GitHub {
         headers.insert(ACCEPT, "application/vnd.github+json".parse().unwrap());
         headers.insert(USER_AGENT, "Awesome-Octocat-App".parse().unwrap());
         headers
+    }
+
+    fn repo(&self, name: &str) -> String {
+        format!("{}/users/{}/repos?page=1&per_page=100", self.domain(), name)
     }
 
     fn repos(&self) -> String {

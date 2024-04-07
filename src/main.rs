@@ -15,11 +15,33 @@
  * limitations under the License.
  */
 
-use std::env;
+use std::fs;
 
+use flexible::conf::config::ConfigData;
 use flexible::plugins::get_api;
 
 fn main() {
-    let api = get_api("github", "baerwang".to_string());
-    _ = api.execute(env::var("token").unwrap().as_str());
+    let toml_data = match fs::read_to_string("config.toml") {
+        Ok(content) => content,
+        Err(err) => {
+            panic!("Failed to read TOML file: {}", err);
+        }
+    };
+
+    let config: ConfigData = match toml::from_str(&toml_data) {
+        Ok(parsed) => parsed,
+        Err(err) => {
+            panic!("Failed to parse TOML data: {}", err);
+        }
+    };
+
+    let token = config.token.as_str();
+    let plugin = config.config.as_str();
+
+    config.owners.iter().for_each(|owner| {
+        let api = get_api(plugin, owner.name.clone());
+        owner.repos.iter().for_each(|repo| {
+            _ = api.execute(token, repo.as_str());
+        })
+    });
 }

@@ -15,15 +15,4 @@
  * limitations under the License.
  */
 
-use reqwest::header::HeaderMap;
-
-pub trait Api {
-    fn domain(&self) -> &str;
-    fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error>;
-    fn headers(&self, token: &str) -> HeaderMap;
-    fn repo(&self, repo: &str) -> String;
-    fn repos(&self) -> String;
-    fn pull_requests(&self, repo: &str) -> String;
-    fn issues(&self, repo: &str) -> String;
-    fn reviews(&self, repo: &str, number: i64) -> String;
-}
+pub mod config;
