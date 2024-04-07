@@ -1,30 +1,34 @@
 use std::string::String;
 
 use reqwest::header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT};
-use serde_json::Value;
+use serde::Deserialize;
 
 use crate::plugins::api::Api;
 use crate::plugins::client;
 
 pub struct GitHub {
-    pub owner: Option<String>,
-    pub org: Option<String>,
+    pub owner: String,
 }
 
 impl GitHub {
-    pub fn new(owner: Option<String>, org: Option<String>) -> Self {
-        GitHub { owner, org }
+    pub fn new(owner: String) -> Self {
+        GitHub { owner }
     }
+}
 
-    fn name(&self) -> String {
-        match self.owner {
-            Some(ref s) => s.clone(),
-            None => match self.org {
-                Some(ref s) => s.clone(),
-                None => panic!("No owner or org specified"),
-            },
-        }
-    }
+#[derive(Debug, Deserialize)]
+struct User {
+    login: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Reviews {
+    users: Vec<User>,
+}
+
+#[derive(Debug, Deserialize)]
+struct PullRequest {
+    number: i64,
 }
 
 impl Api for GitHub {
@@ -34,15 +38,15 @@ impl Api for GitHub {
 
     fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error> {
         let rsp = client(self.pull_requests(repo), self.headers(token))?;
-        let parsed_json: Value = serde_json::from_str(&rsp)?;
-        if let Some(array) = parsed_json.as_array() {
-            for element in array {
-                if let Some(number) = element.get("number").and_then(|number| number.as_i64()) {
-                    let rsp = client(self.reviews(repo, number), self.headers(token))?;
-                    // todo
-                    println!("{}", rsp)
+        let prs: Vec<PullRequest> = serde_json::from_str(&rsp)?;
+        for pr in prs {
+            let reviews_data = client(self.reviews(repo, pr.number), self.headers(token))?;
+            let reviews: Reviews = serde_json::from_str(&reviews_data)?;
+            reviews.users.iter().for_each(|user| {
+                if user.login == self.owner {
+                    println!("{}: {}", repo, pr.number);
                 }
-            }
+            });
         }
         Ok(())
     }
@@ -55,33 +59,39 @@ impl Api for GitHub {
         headers
     }
 
-    fn repo(&self, name: &str) -> String {
-        format!("{}/users/{}/repos?page=1&per_page=100", self.domain(), name)
+    fn repo(&self, repo: &str) -> String {
+        format!("{}/users/{repo}/repos?page=1&per_page=100", self.domain())
     }
 
     fn repos(&self) -> String {
-        match self.owner {
-            Some(ref s) => format!("{}/users/{}/repos?page=1&per_page=100", self.domain(), s),
-            None => match self.org {
-                Some(ref s) => format!("{}/orgs/{}/repos?page=1&per_page=100", self.domain(), s),
-                None => panic!("No owner or org specified"),
-            },
-        }
+        format!(
+            "{}/users/{}/repos?page=1&per_page=100",
+            self.domain(),
+            self.owner
+        )
+    }
+
+    fn org_repos(&self) -> String {
+        format!(
+            "{}/orgs/{}/repos?page=1&per_page=100",
+            self.domain(),
+            self.owner
+        )
     }
 
     fn pull_requests(&self, repo: &str) -> String {
-        format!("{}/repos/{}/{repo}/pulls", self.domain(), self.name())
+        format!("{}/repos/{}/{repo}/pulls", self.domain(), self.owner)
     }
 
     fn issues(&self, repo: &str) -> String {
-        format!("{}/repos/{}/{repo}/issues", self.domain(), self.name())
+        format!("{}/repos/{}/{repo}/issues", self.domain(), self.owner)
     }
 
     fn reviews(&self, repo: &str, number: i64) -> String {
         format!(
             "{}/repos/{}/{repo}/pulls/{number}/requested_reviewers",
             self.domain(),
-            self.name()
+            self.owner
         )
     }
 }

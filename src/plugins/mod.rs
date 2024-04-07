@@ -24,7 +24,7 @@ mod github;
 
 pub fn get_api(api: &str, owner: String) -> Box<dyn Api> {
     match api {
-        "github" => Box::new(github::GitHub::new(Some(owner), None)),
+        "github" => Box::new(github::GitHub::new(owner)),
         _ => panic!("Unsupported"),
     }
 }

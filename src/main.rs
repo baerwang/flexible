@@ -36,7 +36,7 @@ fn main() {
     };
 
     let token = config.token.as_str();
-    let plugin = config.config.as_str();
+    let plugin = config.plugin.as_str();
 
     config.owners.iter().for_each(|owner| {
         let api = get_api(plugin, owner.name.clone());
@@ -44,4 +44,11 @@ fn main() {
             _ = api.execute(token, repo.as_str());
         })
     });
+
+    for (org, repos) in &config.orgs {
+        let api = get_api(plugin, org.clone());
+        for repo in repos {
+            _ = api.execute(token, repo.as_str());
+        }
+    }
 }

@@ -1,4 +1,4 @@
-config = "github"
+plugin = "github"
 token = "ghp_4"
 reviews = ["baerwang"]
 owners = [{ name = "baerwang", repos = ["pika"] }]

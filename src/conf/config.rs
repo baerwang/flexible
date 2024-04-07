@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct ConfigData {
-    pub config: String,
+    pub plugin: String,
     pub token: String,
     pub reviews: Vec<String>,
     pub owners: Vec<Owner>,
