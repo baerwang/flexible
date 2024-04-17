@@ -16,4 +16,5 @@
  */
 
 pub mod conf;
+pub mod notification;
 pub mod plugins;

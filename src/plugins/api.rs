@@ -17,8 +17,13 @@
 
 use reqwest::header::HeaderMap;
 
+pub struct PullRequest {
+    pub title: String,
+    pub number: i64,
+}
+
 pub trait Api {
-    fn domain(&self) -> &str;
+    fn api(&self) -> &str;
     fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error>;
     fn headers(&self, token: &str) -> HeaderMap;
     fn repo(&self, repo: &str) -> String;
@@ -27,4 +32,5 @@ pub trait Api {
     fn pull_requests(&self, repo: &str) -> String;
     fn issues(&self, repo: &str) -> String;
     fn reviews(&self, repo: &str, number: i64) -> String;
+    fn notify(&self, repo: &str, content: &str, pr: PullRequest);
 }

@@ -1,18 +1,22 @@
+use std::collections::HashMap;
 use std::string::String;
 
 use reqwest::header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT};
 use serde::Deserialize;
 
+use crate::notification::notify::notify;
 use crate::plugins::api::Api;
+use crate::plugins::api::PullRequest as PR;
 use crate::plugins::client;
 
 pub struct GitHub {
     pub owner: String,
+    pub reviews: HashMap<String, ()>,
 }
 
 impl GitHub {
-    pub fn new(owner: String) -> Self {
-        GitHub { owner }
+    pub fn new(owner: String, reviews: HashMap<String, ()>) -> Self {
+        GitHub { owner, reviews }
     }
 }
 
@@ -28,11 +32,12 @@ struct Reviews {
 
 #[derive(Debug, Deserialize)]
 struct PullRequest {
+    title: String,
     number: i64,
 }
 
 impl Api for GitHub {
-    fn domain(&self) -> &str {
+    fn api(&self) -> &str {
         "https://api.github.com"
     }
 
@@ -43,8 +48,15 @@ impl Api for GitHub {
             let reviews_data = client(self.reviews(repo, pr.number), self.headers(token))?;
             let reviews: Reviews = serde_json::from_str(&reviews_data)?;
             reviews.users.iter().for_each(|user| {
-                if user.login == self.owner {
-                    println!("{}: {}", repo, pr.number);
+                if self.reviews.contains_key(user.login.as_str()) {
+                    self.notify(
+                        repo,
+                        "",
+                        PR {
+                            title: pr.title.clone(),
+                            number: pr.number,
+                        },
+                    )
                 }
             });
         }
@@ -60,13 +72,13 @@ impl Api for GitHub {
     }
 
     fn repo(&self, repo: &str) -> String {
-        format!("{}/users/{repo}/repos?page=1&per_page=100", self.domain())
+        format!("{}/users/{repo}/repos?page=1&per_page=100", self.api())
     }
 
     fn repos(&self) -> String {
         format!(
             "{}/users/{}/repos?page=1&per_page=100",
-            self.domain(),
+            self.api(),
             self.owner
         )
     }
@@ -74,24 +86,37 @@ impl Api for GitHub {
     fn org_repos(&self) -> String {
         format!(
             "{}/orgs/{}/repos?page=1&per_page=100",
-            self.domain(),
+            self.api(),
             self.owner
         )
     }
 
     fn pull_requests(&self, repo: &str) -> String {
-        format!("{}/repos/{}/{repo}/pulls", self.domain(), self.owner)
+        format!("{}/repos/{}/{repo}/pulls", self.api(), self.owner)
     }
 
     fn issues(&self, repo: &str) -> String {
-        format!("{}/repos/{}/{repo}/issues", self.domain(), self.owner)
+        format!("{}/repos/{}/{repo}/issues", self.api(), self.owner)
     }
 
     fn reviews(&self, repo: &str, number: i64) -> String {
         format!(
             "{}/repos/{}/{repo}/pulls/{number}/requested_reviewers",
-            self.domain(),
+            self.api(),
             self.owner
+        )
+    }
+    fn notify(&self, repo: &str, _: &str, pr: PR) {
+        notify(
+            repo,
+            pr.title.as_str(),
+            format!(
+                "{}/repos/{}/{repo}/pull/{}",
+                self.api(),
+                self.owner,
+                pr.number
+            )
+            .as_str(),
         )
     }
 }

@@ -15,28 +15,4 @@
  * limitations under the License.
  */
 
-use std::collections::HashMap;
-
-use reqwest::header::HeaderMap;
-
-use crate::plugins::api::Api;
-
-mod api;
-mod github;
-
-pub fn get_api(api: &str, owner: String, reviews: HashMap<String, ()>) -> Box<dyn Api> {
-    match api {
-        "github" => Box::new(github::GitHub::new(owner, reviews)),
-        _ => panic!("Unsupported"),
-    }
-}
-
-pub fn client(url: String, headers: HeaderMap) -> Result<String, reqwest::Error> {
-    let resp = reqwest::blocking::Client::new()
-        .get(url)
-        .headers(headers)
-        .timeout(std::time::Duration::from_secs(3))
-        .send()?
-        .text()?;
-    Ok(resp)
-}
+pub mod notify;
