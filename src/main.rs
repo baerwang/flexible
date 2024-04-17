@@ -40,11 +40,9 @@ fn main() {
     let plugin = config.plugin.as_str();
     let reviews: HashMap<String, ()> = config.reviews.iter().map(|key| (key.clone(), ())).collect();
 
-    config.owners.iter().for_each(|owner| {
-        let api = get_api(plugin, owner.name.clone(), reviews.clone());
-        owner.repos.iter().for_each(|repo| {
-            _ = api.execute(token, repo.as_str());
-        })
+    let api = get_api(plugin, config.owners.name.clone(), reviews.clone());
+    config.owners.repos.iter().for_each(|repo| {
+        _ = api.execute(token, repo.as_str());
     });
 
     for (org, repos) in &config.orgs {
