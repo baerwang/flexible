@@ -24,6 +24,6 @@ jobs:
             target/
           key: cargo-build-${{ hashFiles('**/Cargo.lock') }}
 
-      - run: cargo build --verbose
+      - run: cargo build --manifest-path ./src-tauri/Cargo.toml --verbose
 
-      - run: cargo test --verbose
+      - run: cargo test --manifest-path ./src-tauri/Cargo.toml --verbose

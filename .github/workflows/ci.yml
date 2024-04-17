@@ -18,7 +18,7 @@ jobs:
           components: rustfmt
 
       - name: Run fmt
-        run: cargo fmt --all -- --check --unstable-features
+        run: cargo fmt --manifest-path ./src-tauri/Cargo.toml --all -- --check --unstable-features
 
   cargo-clippy:
     name: cargo clippy
@@ -34,4 +34,4 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo clippy --all-targets --all-features --workspace -- -D warnings
+      - run: cargo clippy --manifest-path ./src-tauri/Cargo.toml --all-targets --all-features --workspace -- -D warnings
