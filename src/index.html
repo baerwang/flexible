@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" href="styles.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>flexible</title>
+    <script type="module" src="main.js" defer></script>
+</head>
+
+<body>
+<div class="container">
+    <h1>Welcome to flexible!</h1>
+
+    <br><br>
+
+    <form id="done">
+        <label for="token">Token：</label>
+        <input type="text" id="token" name="token" placeholder="ghp_xxx"><br><br>
+
+        <label for="review">Review：</label>
+        <input type="text" id="review" name="review" placeholder="review username"><br><br>
+
+        <label for="owner">Owner：</label>
+        <input type="text" id="owner" name="owner" placeholder="username">
+
+        <label for="repos">Repos：</label>
+        <input type="text" id="repos" name="repos" placeholder="repo,repo1..."><br><br>
+
+        <label for="org">Org：</label>
+        <input type="text" id="org" name="org" placeholder="org name">
+
+        <label for="org-repos">Org Repos：</label>
+        <input type="text" id="org-repos" name="org-repos" placeholder="repo,repo1..."><br><br>
+
+        <div>
+            <label for="policy">Policy：</label>
+            <select id="policy" name="policy">
+                <option value="github">Github</option>
+            </select>
+
+            <label for="dispatch">Dispatch：</label>
+            <select id="dispatch" name="dispatch">
+                <option value="5m">5m</option>
+                <option value="30m">30m</option>
+                <option value="1h">1h</option>
+            </select><br><br>
+        </div>
+
+        <button type="submit">Done</button>
+    </form>
+
+    <p id="greet-msg"></p>
+</div>
+</body>
+</html>
