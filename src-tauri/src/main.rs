@@ -17,18 +17,13 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use flexible::conf;
+use flexible::console;
 
 mod tray;
 
-#[tauri::command]
-fn done(conf: conf::config::ConfigData) -> String {
-    conf.valid().to_string()
-}
-
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![done])
+        .invoke_handler(tauri::generate_handler![console::create::create])
         .system_tray(tray::menu())
         .on_system_tray_event(tray::handler)
         .run(tauri::generate_context!())

@@ -22,7 +22,7 @@ use reqwest::header::HeaderMap;
 use crate::plugins::api::Api;
 
 mod api;
-mod github;
+pub mod github;
 
 pub fn get_api(api: &str, owner: String, reviews: HashMap<String, ()>) -> Box<dyn Api> {
     match api {
@@ -31,12 +31,14 @@ pub fn get_api(api: &str, owner: String, reviews: HashMap<String, ()>) -> Box<dy
     }
 }
 
-pub fn client(url: String, headers: HeaderMap) -> Result<String, reqwest::Error> {
-    let resp = reqwest::blocking::Client::new()
+pub async fn client(url: String, headers: HeaderMap) -> Result<String, reqwest::Error> {
+    let resp = reqwest::Client::new()
         .get(url)
         .headers(headers)
         .timeout(std::time::Duration::from_secs(3))
-        .send()?
-        .text()?;
+        .send()
+        .await?
+        .text()
+        .await?;
     Ok(resp)
 }

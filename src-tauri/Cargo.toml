@@ -28,13 +28,13 @@ tauri-build = { version = "1", features = [] }
 
 [dependencies]
 tauri = { version = "1", features = ["system-tray", "shell-open"] }
-reqwest = { version = "0.12", features = ["json", "blocking"] }
+reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 anyhow = "1.0"
-toml = "0.8.8"
 notify-rust = "4"
+tokio-cron-scheduler = "*"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

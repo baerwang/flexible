@@ -1,14 +1,13 @@
 const {invoke} = window.__TAURI__.tauri;
 
-let conf;
 let greetMsgEl;
 
-async function done() {
-    let content = await invoke("done", {conf: conf})
+async function create(conf) {
+    let content = await invoke("create", {conf: conf})
     if (content !== "") {
-        greetMsgEl.textContent = content;
-    }else{
-        greetMsgEl.textContent = "";
+        greetMsgEl.innerHTML = "<p style='color: red'>" + content + "</p>";
+    } else {
+        greetMsgEl.textContent = "Success!";
     }
 }
 
@@ -26,11 +25,11 @@ window.addEventListener("DOMContentLoaded", () => {
         let org = document.querySelector("#org").value;
         let org_repos = document.querySelector("#org-repos").value.split(",");
 
-        conf = {
+        let conf = {
             plugin: policy, token: token, owners: {
                 name: owner, repos: repos,
-            }, reviews: review, dispatch: dispatch, orgs: new Map().set(org, org_repos),
+            }, reviews: review, dispatch: parseInt(dispatch), orgs: new Map().set(org, org_repos),
         };
-        done();
+        create(conf);
     });
 });

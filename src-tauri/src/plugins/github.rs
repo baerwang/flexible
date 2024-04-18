@@ -35,6 +35,28 @@ impl GitHub {
     pub fn new(owner: String, reviews: HashMap<String, ()>) -> Self {
         GitHub { owner, reviews }
     }
+
+    pub async fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error> {
+        let rsp = client(self.pull_requests(repo), self.headers(token)).await?;
+        let prs: Vec<PullRequest> = serde_json::from_str(&rsp)?;
+        for pr in prs {
+            let reviews_data = client(self.reviews(repo, pr.number), self.headers(token)).await?;
+            let reviews: Reviews = serde_json::from_str(&reviews_data)?;
+            reviews.users.iter().for_each(|user| {
+                if self.reviews.contains_key(user.login.as_str()) {
+                    self.notify(
+                        repo,
+                        "",
+                        crate::plugins::api::PullRequest {
+                            title: pr.title.clone(),
+                            number: pr.number,
+                        },
+                    )
+                }
+            });
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -56,28 +78,6 @@ struct PullRequest {
 impl Api for GitHub {
     fn api(&self) -> &str {
         "https://api.github.com"
-    }
-
-    fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error> {
-        let rsp = client(self.pull_requests(repo), self.headers(token))?;
-        let prs: Vec<PullRequest> = serde_json::from_str(&rsp)?;
-        for pr in prs {
-            let reviews_data = client(self.reviews(repo, pr.number), self.headers(token))?;
-            let reviews: Reviews = serde_json::from_str(&reviews_data)?;
-            reviews.users.iter().for_each(|user| {
-                if self.reviews.contains_key(user.login.as_str()) {
-                    self.notify(
-                        repo,
-                        "",
-                        PR {
-                            title: pr.title.clone(),
-                            number: pr.number,
-                        },
-                    )
-                }
-            });
-        }
-        Ok(())
     }
 
     fn headers(&self, token: &str) -> HeaderMap {

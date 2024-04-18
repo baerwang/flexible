@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-use reqwest::header::HeaderMap;
+use crate::{conf, dispatch};
 
-pub struct PullRequest {
-    pub title: String,
-    pub number: i64,
+#[tauri::command]
+pub async fn create(conf: conf::config::ConfigData) -> String {
+    match conf.valid() {
+        r => r.to_string(),
+        "" => match dispatch::execute(conf).await {
+            Ok(uuid) => {
+                println!("uuid:{}", uuid);
+                "".to_string()
+            }
+            Err(_) => "start schedule task fail".to_string(),
+        },
+    }
 }
 
-pub trait Api {
-    fn api(&self) -> &str;
-    fn headers(&self, token: &str) -> HeaderMap;
-    fn repo(&self, repo: &str) -> String;
-    fn repos(&self) -> String;
-    fn org_repos(&self) -> String;
-    fn pull_requests(&self, repo: &str) -> String;
-    fn issues(&self, repo: &str) -> String;
-    fn reviews(&self, repo: &str, number: i64) -> String;
-    fn notify(&self, repo: &str, content: &str, pr: PullRequest);
-}
+#[tauri::command]
+pub fn repos() -> () {}

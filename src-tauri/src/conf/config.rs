@@ -26,6 +26,7 @@ pub struct ConfigData {
     pub reviews: Vec<String>,
     pub owners: Owner,
     pub orgs: HashMap<String, Vec<String>>,
+    pub dispatch: u64,
 }
 
 impl ConfigData {
@@ -34,12 +35,16 @@ impl ConfigData {
             "token not allowed empty"
         } else if self.plugin.is_empty() {
             "plugin not allowed empty"
+        } else if self.dispatch == 0 {
+            "dispatch not allowed empty"
         } else if self.reviews.is_empty() || self.reviews.iter().any(|s| s.is_empty()) {
             "reviews not allowed empty"
-        } else if self.owners.name.is_empty() {
-            "owner not allowed empty"
-        } else if self.owners.repos.is_empty() || self.owners.repos.iter().any(|s| s.is_empty()) {
-            "owner repos not allowed empty"
+        } else if self.orgs.is_empty()
+            && (self.owners.name.is_empty()
+                || self.owners.repos.is_empty()
+                || self.owners.repos.iter().any(|s| s.is_empty()))
+        {
+            "owner/repos or orgs/repos not allowed empty"
         } else {
             ""
         }
