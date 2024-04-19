@@ -16,6 +16,7 @@
  */
 
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
@@ -25,30 +26,60 @@ use crate::plugins::github::GitHub;
 
 pub async fn execute(c: ConfigData) -> Result<String, JobSchedulerError> {
     let sched = JobScheduler::new().await?;
-    let token = c.token;
-    let reviews: HashMap<String, ()> = c.reviews.iter().map(|key| (key.clone(), ())).collect();
-    let task = Job::new_repeated(Duration::from_secs(c.dispatch), move |_uuid, _l| {
-        if !c.owners.name.is_empty() {
-            let hub = GitHub::new(c.owners.name.clone(), reviews.clone());
-            c.owners.repos.iter().for_each(|repo| {
-                if !repo.is_empty() {
-                    _ = hub.execute(token.as_str(), repo.as_str());
-                }
-            });
-        }
+    let c_shared = Arc::new(c);
 
-        if !c.orgs.is_empty() {
-            for (org, repos) in &c.orgs {
-                if !org.is_empty() && !repos.is_empty() {
-                    let hub = GitHub::new(org.clone(), reviews.clone());
-                    for repo in repos {
-                        _ = hub.execute(token.as_str(), repo.as_str());
-                    }
-                }
-            }
-        }
+    let task = Job::new_repeated(Duration::from_secs(c_shared.dispatch), move |_uuid, _l| {
+        let c_shared = Arc::clone(&c_shared);
+        tokio::spawn(async move {
+            execute_workflow(c_shared).await;
+        });
     })?;
+
     let uuid = sched.add(task).await?;
     sched.start().await?;
     Ok(uuid.to_string())
+}
+
+async fn execute_workflow(c_shared: Arc<ConfigData>) {
+    let reviews: HashMap<String, ()> = c_shared
+        .reviews
+        .iter()
+        .map(|key| (key.clone(), ()))
+        .collect();
+
+    // Execute tasks for owners' repos
+    if !c_shared.owners.name.is_empty() {
+        let hub = GitHub::new(c_shared.owners.name.clone(), reviews.clone());
+        execute_plugin_tasks(
+            Arc::clone(&c_shared),
+            &hub,
+            c_shared.owners.repos.iter().map(|repo| repo.as_str()),
+        )
+        .await;
+    }
+
+    // Execute tasks for orgs' repos
+    for (org, repos) in &c_shared.orgs {
+        if !org.is_empty() && !repos.is_empty() {
+            let hub = GitHub::new(org.to_string(), reviews.clone());
+            execute_plugin_tasks(
+                Arc::clone(&c_shared),
+                &hub,
+                repos.iter().map(|repo| repo.as_str()),
+            )
+            .await;
+        }
+    }
+}
+
+async fn execute_plugin_tasks(
+    c_shared: Arc<ConfigData>,
+    hub: &GitHub,
+    repos: impl Iterator<Item = &str>,
+) {
+    for repo in repos {
+        if let Err(err) = hub.execute(c_shared.token.as_str(), repo).await {
+            eprintln!("Error executing task: {}", err);
+        }
+    }
 }

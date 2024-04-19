@@ -20,16 +20,22 @@ use crate::{conf, dispatch};
 #[tauri::command]
 pub async fn create(conf: conf::config::ConfigData) -> String {
     match conf.valid() {
+        "" => {
+            _ = dispatch::execute(conf).await;
+            "".to_string()
+        }
         r => r.to_string(),
-        "" => match dispatch::execute(conf).await {
-            Ok(uuid) => {
-                println!("uuid:{}", uuid);
-                "".to_string()
-            }
-            Err(_) => "start schedule task fail".to_string(),
-        },
     }
 }
 
 #[tauri::command]
-pub fn repos() -> () {}
+#[allow(clippy::unused_unit)]
+pub fn repos(_name: &str) -> () {}
+
+#[tauri::command]
+#[allow(clippy::unused_unit)]
+pub fn orgs(_name: &str) -> () {}
+
+#[tauri::command]
+#[allow(clippy::unused_unit)]
+pub fn org_repos(_org: &str) -> () {}
