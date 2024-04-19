@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -41,15 +40,9 @@ pub async fn execute(c: ConfigData) -> Result<String, JobSchedulerError> {
 }
 
 async fn execute_workflow(c_shared: Arc<ConfigData>) {
-    let reviews: HashMap<String, ()> = c_shared
-        .reviews
-        .iter()
-        .map(|key| (key.clone(), ()))
-        .collect();
-
     // Execute tasks for owners' repos
     if !c_shared.owners.name.is_empty() {
-        let hub = GitHub::new(c_shared.owners.name.clone(), reviews.clone());
+        let hub = GitHub::new(c_shared.owners.name.clone(), c_shared.reviews());
         execute_plugin_tasks(
             Arc::clone(&c_shared),
             &hub,
@@ -61,7 +54,7 @@ async fn execute_workflow(c_shared: Arc<ConfigData>) {
     // Execute tasks for orgs' repos
     for (org, repos) in &c_shared.orgs {
         if !org.is_empty() && !repos.is_empty() {
-            let hub = GitHub::new(org.to_string(), reviews.clone());
+            let hub = GitHub::new(org.to_string(), c_shared.reviews());
             execute_plugin_tasks(
                 Arc::clone(&c_shared),
                 &hub,

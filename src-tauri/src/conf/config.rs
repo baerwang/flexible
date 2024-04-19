@@ -30,6 +30,17 @@ pub struct ConfigData {
 }
 
 impl ConfigData {
+    pub fn new_owner(plugin: &str, token: &str, owner: Owner) -> Self {
+        ConfigData {
+            plugin: plugin.to_string(),
+            token: token.to_string(),
+            reviews: vec![],
+            owners: owner,
+            orgs: HashMap::new(),
+            dispatch: 0,
+        }
+    }
+
     pub fn valid(&self) -> &str {
         if self.token.is_empty() {
             "token not allowed empty"
@@ -48,6 +59,10 @@ impl ConfigData {
         } else {
             ""
         }
+    }
+
+    pub fn reviews(&self) -> HashMap<String, ()> {
+        self.reviews.iter().map(|key| (key.clone(), ())).collect()
     }
 }
 

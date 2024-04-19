@@ -128,7 +128,7 @@ impl Api for GitHub {
             repo,
             pr.title.as_str(),
             format!(
-                "https://github.com/repos/{}/{repo}/pull/{}",
+                "https://github.com/{}/{repo}/pull/{}",
                 self.owner, pr.number
             )
             .as_str(),

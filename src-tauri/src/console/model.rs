@@ -15,5 +15,12 @@
  * limitations under the License.
  */
 
-pub mod api;
-mod model;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct Repos {
+    name: String,
+    html_url: String,
+    updated_at: String,
+}
