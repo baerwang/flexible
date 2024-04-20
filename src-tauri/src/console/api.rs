@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use crate::console::model::Repos;
+use crate::console::model::{Org, Repo};
 use crate::plugins::{client, get_api};
 use crate::{conf, dispatch};
 
@@ -31,20 +31,30 @@ pub async fn create(conf: conf::config::ConfigData) -> String {
 }
 
 #[tauri::command]
-pub async fn repos(conf: conf::config::ConfigData) -> Result<Vec<Repos>, anyhow::Error> {
+pub async fn repos(conf: conf::config::ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
     let api = get_api(
         conf.plugin.as_str(),
         conf.owners.name.clone(),
         conf.reviews(),
     );
-    let rsp = client(api.repos(), api.headers(conf.token.as_str())).await?;
-    let repos: Vec<Repos> = serde_json::from_str(&rsp)?;
-    Ok(repos)
+    Ok(client::<Vec<Repo>>(api.repos(), api.headers(conf.token.as_str())).await?)
 }
 
 #[tauri::command]
 #[allow(clippy::unused_unit)]
-pub fn orgs(_conf: conf::config::ConfigData) -> () {}
+pub async fn orgs(conf: conf::config::ConfigData) -> Result<Vec<Org>, anyhow::Error> {
+    let api = get_api(conf.plugin.as_str(), "".to_string(), conf.reviews());
+    let client = reqwest::Client::new();
+    // todo request There is a problem with populating access with headers
+    let request = client
+        .get(api.orgs())
+        .header("Authorization", format!("Bearer {}", conf.token))
+        .header("Accept", "application/vnd.github.v3+json")
+        .header("User-Agent", "Awesome-Octocat-App")
+        .build()?;
+    let organizations: Vec<Org> = client.execute(request).await?.json().await?;
+    Ok(organizations)
+}
 
 #[tauri::command]
 #[allow(clippy::unused_unit)]
@@ -69,4 +79,15 @@ mod test {
         assert!(result.is_ok());
         assert_ne!(result.unwrap().len(), 0);
     }
+
+    /*#[tokio::test]
+    async fn test_orgs() {
+        let result = orgs(ConfigData::new(
+            "github",
+            env::var("TOKEN").unwrap().as_str(),
+        ))
+        .await;
+        assert!(result.is_ok());
+        assert_ne!(result.unwrap().len(), 0);
+    }*/
 }

@@ -30,6 +30,20 @@ pub struct ConfigData {
 }
 
 impl ConfigData {
+    pub fn new(plugin: &str, token: &str) -> Self {
+        ConfigData {
+            plugin: plugin.to_string(),
+            token: token.to_string(),
+            reviews: vec![],
+            owners: Owner {
+                name: "".to_string(),
+                repos: vec![],
+            },
+            orgs: HashMap::new(),
+            dispatch: 0,
+        }
+    }
+
     pub fn new_owner(plugin: &str, token: &str, owner: Owner) -> Self {
         ConfigData {
             plugin: plugin.to_string(),

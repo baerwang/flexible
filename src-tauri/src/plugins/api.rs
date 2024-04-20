@@ -28,6 +28,7 @@ pub trait Api {
     fn repo(&self, repo: &str) -> String;
     fn repos(&self) -> String;
     fn org_repos(&self) -> String;
+    fn orgs(&self) -> String;
     fn pull_requests(&self, repo: &str) -> String;
     fn issues(&self, repo: &str) -> String;
     fn reviews(&self, repo: &str, number: i64) -> String;

@@ -19,8 +19,14 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
-pub struct Repos {
+pub struct Repo {
     name: String,
     html_url: String,
     updated_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct Org {
+    login: String,
 }

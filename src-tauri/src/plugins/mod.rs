@@ -15,11 +15,14 @@
  * limitations under the License.
  */
 
+use reqwest::Error;
 use std::collections::HashMap;
 
 use reqwest::header::HeaderMap;
 
 use crate::plugins::api::Api;
+
+use serde::de::DeserializeOwned;
 
 mod api;
 pub mod github;
@@ -31,14 +34,17 @@ pub fn get_api(api: &str, owner: String, reviews: HashMap<String, ()>) -> Box<dy
     }
 }
 
-pub async fn client(url: String, headers: HeaderMap) -> Result<String, reqwest::Error> {
+pub async fn client<T>(url: String, headers: HeaderMap) -> Result<T, Error>
+where
+    T: DeserializeOwned,
+{
     let resp = reqwest::Client::new()
-        .get(url)
+        .get(&url)
         .headers(headers)
         .timeout(std::time::Duration::from_secs(3))
         .send()
         .await?
-        .text()
+        .json::<T>()
         .await?;
     Ok(resp)
 }
