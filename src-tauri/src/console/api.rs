@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
+use crate::conf::config::ConfigData;
 use crate::console::model::{Org, Repo};
+use crate::dispatch;
 use crate::plugins::{client, get_api};
-use crate::{conf, dispatch};
 
 #[tauri::command]
-pub async fn create(conf: conf::config::ConfigData) -> String {
+pub async fn create(conf: ConfigData) -> String {
     match conf.valid() {
         "" => {
             _ = dispatch::execute(conf).await;
@@ -31,7 +32,7 @@ pub async fn create(conf: conf::config::ConfigData) -> String {
 }
 
 #[tauri::command]
-pub async fn repos(conf: conf::config::ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
+pub async fn repos(conf: ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
     let api = get_api(
         conf.plugin.as_str(),
         conf.owners.name.clone(),
@@ -42,7 +43,7 @@ pub async fn repos(conf: conf::config::ConfigData) -> Result<Vec<Repo>, anyhow::
 
 #[tauri::command]
 #[allow(clippy::unused_unit)]
-pub async fn orgs(conf: conf::config::ConfigData) -> Result<Vec<Org>, anyhow::Error> {
+pub async fn orgs(conf: ConfigData) -> Result<Vec<Org>, anyhow::Error> {
     let api = get_api(conf.plugin.as_str(), "".to_string(), conf.reviews());
     let client = reqwest::Client::new();
     // todo request There is a problem with populating access with headers
@@ -58,12 +59,19 @@ pub async fn orgs(conf: conf::config::ConfigData) -> Result<Vec<Org>, anyhow::Er
 
 #[tauri::command]
 #[allow(clippy::unused_unit)]
-pub fn org_repos(_org: &str) -> () {}
+pub async fn org_repos(conf: ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
+    let api = get_api(
+        conf.plugin.as_str(),
+        conf.owners.name.clone(),
+        conf.reviews(),
+    );
+    Ok(client::<Vec<Repo>>(api.org_repos(), api.headers(conf.token.as_str())).await?)
+}
 
 #[cfg(test)]
 mod test {
     use crate::conf::config::{ConfigData, Owner};
-    use crate::console::api::repos;
+    use crate::console::api::{org_repos, repos};
 
     #[tokio::test]
     async fn test_repos() {
@@ -90,4 +98,19 @@ mod test {
         assert!(result.is_ok());
         assert_ne!(result.unwrap().len(), 0);
     }*/
+
+    #[tokio::test]
+    async fn test_org_repos() {
+        let result = org_repos(ConfigData::new_owner(
+            "github",
+            "",
+            Owner {
+                name: "Suzaku-APIX".to_string(),
+                repos: Vec::new(),
+            },
+        ))
+        .await;
+        assert!(result.is_ok());
+        assert_ne!(result.unwrap().len(), 0);
+    }
 }
