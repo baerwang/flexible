@@ -18,7 +18,7 @@
 use std::collections::HashMap;
 use std::string::String;
 
-use reqwest::header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT};
+use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 use serde::Deserialize;
 
 use crate::notification::notify::notify;
@@ -80,10 +80,14 @@ impl Api for GitHub {
     }
 
     fn headers(&self, token: &str) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, format!("Bearer: {}", token).parse().unwrap());
-        headers.insert(ACCEPT, "application/vnd.github+json".parse().unwrap());
-        headers.insert(USER_AGENT, "Awesome-Octocat-App".parse().unwrap());
+        let bearer_token = format!("Bearer {}", token);
+        let mut headers = HeaderMap::with_capacity(3);
+        headers.insert(AUTHORIZATION, HeaderValue::from_str(&bearer_token).unwrap());
+        headers.insert(
+            ACCEPT,
+            HeaderValue::from_static("application/vnd.github+json"),
+        );
+        headers.insert(USER_AGENT, HeaderValue::from_static("Awesome-Octocat-App"));
         headers
     }
 
