@@ -45,16 +45,7 @@ pub async fn repos(conf: ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
 #[allow(clippy::unused_unit)]
 pub async fn orgs(conf: ConfigData) -> Result<Vec<Org>, anyhow::Error> {
     let api = get_api(conf.plugin.as_str(), "".to_string(), conf.reviews());
-    let client = reqwest::Client::new();
-    // todo request There is a problem with populating access with headers
-    let request = client
-        .get(api.orgs())
-        .header("Authorization", format!("Bearer {}", conf.token))
-        .header("Accept", "application/vnd.github.v3+json")
-        .header("User-Agent", "Awesome-Octocat-App")
-        .build()?;
-    let organizations: Vec<Org> = client.execute(request).await?.json().await?;
-    Ok(organizations)
+    Ok(client::<Vec<Org>>(api.orgs(), api.headers(conf.token.as_str())).await?)
 }
 
 #[tauri::command]
@@ -70,14 +61,25 @@ pub async fn org_repos(conf: ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
 
 #[cfg(test)]
 mod test {
+    use std::env;
+
     use crate::conf::config::{ConfigData, Owner};
-    use crate::console::api::{org_repos, repos};
+    use crate::console::api::{org_repos, orgs, repos};
+
+    fn token() -> String {
+        env::var("TOKEN_GITHUB").expect("TOKEN environment variable not found")
+    }
+
+    #[test]
+    fn test_token() {
+        assert_ne!(token().len(), 0);
+    }
 
     #[tokio::test]
     async fn test_repos() {
         let result = repos(ConfigData::new_owner(
             "github",
-            "",
+            token().as_str(),
             Owner {
                 name: "baerwang".to_string(),
                 repos: Vec::new(),
@@ -88,22 +90,18 @@ mod test {
         assert_ne!(result.unwrap().len(), 0);
     }
 
-    /*#[tokio::test]
+    #[tokio::test]
     async fn test_orgs() {
-        let result = orgs(ConfigData::new(
-            "github",
-            env::var("TOKEN").unwrap().as_str(),
-        ))
-        .await;
+        let result = orgs(ConfigData::new("github", token().as_str())).await;
         assert!(result.is_ok());
         assert_ne!(result.unwrap().len(), 0);
-    }*/
+    }
 
     #[tokio::test]
     async fn test_org_repos() {
         let result = org_repos(ConfigData::new_owner(
             "github",
-            "",
+            token().as_str(),
             Owner {
                 name: "Suzaku-APIX".to_string(),
                 repos: Vec::new(),

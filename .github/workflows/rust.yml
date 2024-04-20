@@ -6,7 +6,7 @@ on:
   pull_request:
 
 env:
-  CARGO_TERM_COLOR: always
+  TOKEN_GITHUB: ${{ secrets.TOKEN }}
 
 jobs:
   build:
