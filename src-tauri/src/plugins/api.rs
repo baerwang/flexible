@@ -22,7 +22,7 @@ pub struct PullRequest {
     pub number: i64,
 }
 
-pub trait Api {
+pub trait Api: Send {
     fn api(&self) -> &str;
     fn headers(&self, token: &str) -> HeaderMap;
     fn repo(&self, repo: &str) -> String;

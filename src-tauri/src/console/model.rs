@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub struct Repo {
     name: String,
@@ -25,7 +25,7 @@ pub struct Repo {
     updated_at: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub struct Org {
     login: String,

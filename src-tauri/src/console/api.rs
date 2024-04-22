@@ -17,6 +17,7 @@
 
 use crate::conf::config::ConfigData;
 use crate::console::model::{Org, Repo};
+use crate::console::Rest;
 use crate::dispatch;
 use crate::plugins::{client, get_api};
 
@@ -32,31 +33,29 @@ pub async fn create(conf: ConfigData) -> String {
 }
 
 #[tauri::command]
-pub async fn repos(conf: ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
+pub async fn repos(conf: ConfigData) -> Rest<Vec<Repo>> {
     let api = get_api(
         conf.plugin.as_str(),
         conf.owners.name.clone(),
         conf.reviews(),
     );
-    Ok(client::<Vec<Repo>>(api.repos(), api.headers(conf.token.as_str())).await?)
+    Rest::from_result(client::<Vec<Repo>>(api.repos(), api.headers(conf.token.as_str())).await)
 }
 
 #[tauri::command]
-#[allow(clippy::unused_unit)]
-pub async fn orgs(conf: ConfigData) -> Result<Vec<Org>, anyhow::Error> {
+pub async fn orgs(conf: ConfigData) -> Rest<Vec<Org>> {
     let api = get_api(conf.plugin.as_str(), "".to_string(), conf.reviews());
-    Ok(client::<Vec<Org>>(api.orgs(), api.headers(conf.token.as_str())).await?)
+    Rest::from_result(client::<Vec<Org>>(api.orgs(), api.headers(conf.token.as_str())).await)
 }
 
 #[tauri::command]
-#[allow(clippy::unused_unit)]
-pub async fn org_repos(conf: ConfigData) -> Result<Vec<Repo>, anyhow::Error> {
+pub async fn org_repos(conf: ConfigData) -> Rest<Vec<Repo>> {
     let api = get_api(
         conf.plugin.as_str(),
         conf.owners.name.clone(),
         conf.reviews(),
     );
-    Ok(client::<Vec<Repo>>(api.org_repos(), api.headers(conf.token.as_str())).await?)
+    Rest::from_result(client::<Vec<Repo>>(api.org_repos(), api.headers(conf.token.as_str())).await)
 }
 
 #[cfg(test)]
@@ -86,15 +85,15 @@ mod test {
             },
         ))
         .await;
-        assert!(result.is_ok());
-        assert_ne!(result.unwrap().len(), 0);
+        assert!(result.error.is_none());
+        assert_ne!(result.data.unwrap().len(), 0);
     }
 
     #[tokio::test]
     async fn test_orgs() {
         let result = orgs(ConfigData::new("github", token().as_str())).await;
-        assert!(result.is_ok());
-        assert_ne!(result.unwrap().len(), 0);
+        assert!(result.error.is_none());
+        assert_ne!(result.data.unwrap().len(), 0);
     }
 
     #[tokio::test]
@@ -108,7 +107,7 @@ mod test {
             },
         ))
         .await;
-        assert!(result.is_ok());
-        assert_ne!(result.unwrap().len(), 0);
+        assert!(result.error.is_none());
+        assert_ne!(result.data.unwrap().len(), 0);
     }
 }

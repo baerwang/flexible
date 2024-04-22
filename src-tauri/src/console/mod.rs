@@ -17,3 +17,24 @@
 
 pub mod api;
 mod model;
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Rest<T> {
+    data: Option<T>,
+    error: Option<String>,
+}
+
+impl<T> Rest<T> {
+    pub fn new(data: Option<T>, error: Option<String>) -> Rest<T> {
+        Rest { data, error }
+    }
+
+    pub fn from_result(result: Result<T, reqwest::Error>) -> Rest<T> {
+        match result {
+            Ok(data) => Rest::new(Some(data), None),
+            Err(err) => Rest::new(None, Some(err.to_string())),
+        }
+    }
+}

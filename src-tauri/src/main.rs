@@ -23,7 +23,12 @@ mod tray;
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![console::api::create])
+        .invoke_handler(tauri::generate_handler![
+            console::api::create,
+            console::api::repos,
+            console::api::orgs,
+            console::api::org_repos
+        ])
         .system_tray(tray::menu())
         .on_system_tray_event(tray::handler)
         .run(tauri::generate_context!())
