@@ -19,7 +19,7 @@ use crate::conf::config::ConfigData;
 use crate::console::model::{Org, Repo};
 use crate::console::Rest;
 use crate::dispatch;
-use crate::plugins::{client, get_api};
+use crate::plugins::{get_api, get_client};
 
 #[tauri::command]
 pub async fn create(conf: ConfigData) -> String {
@@ -34,28 +34,22 @@ pub async fn create(conf: ConfigData) -> String {
 
 #[tauri::command]
 pub async fn repos(conf: ConfigData) -> Rest<Vec<Repo>> {
-    let api = get_api(
-        conf.plugin.as_str(),
-        conf.owners.name.clone(),
-        conf.reviews(),
-    );
-    Rest::from_result(client::<Vec<Repo>>(api.repos(), api.headers(conf.token.as_str())).await)
+    let api = get_api(conf.plugin.as_str(), conf.owners.name.clone(), None);
+    Rest::from_result(get_client::<Vec<Repo>>(api.repos(), api.headers(conf.token.as_str())).await)
 }
 
 #[tauri::command]
 pub async fn orgs(conf: ConfigData) -> Rest<Vec<Org>> {
-    let api = get_api(conf.plugin.as_str(), "".to_string(), conf.reviews());
-    Rest::from_result(client::<Vec<Org>>(api.orgs(), api.headers(conf.token.as_str())).await)
+    let api = get_api(conf.plugin.as_str(), "".to_string(), None);
+    Rest::from_result(get_client::<Vec<Org>>(api.orgs(), api.headers(conf.token.as_str())).await)
 }
 
 #[tauri::command]
 pub async fn org_repos(conf: ConfigData) -> Rest<Vec<Repo>> {
-    let api = get_api(
-        conf.plugin.as_str(),
-        conf.owners.name.clone(),
-        conf.reviews(),
-    );
-    Rest::from_result(client::<Vec<Repo>>(api.org_repos(), api.headers(conf.token.as_str())).await)
+    let api = get_api(conf.plugin.as_str(), conf.owners.name.clone(), None);
+    Rest::from_result(
+        get_client::<Vec<Repo>>(api.org_repos(), api.headers(conf.token.as_str())).await,
+    )
 }
 
 #[cfg(test)]

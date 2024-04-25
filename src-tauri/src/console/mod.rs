@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
+use serde::{Deserialize, Serialize};
+
 pub mod api;
 mod model;
-
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rest<T> {

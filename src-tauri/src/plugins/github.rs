@@ -24,7 +24,7 @@ use serde::Deserialize;
 use crate::notification::notify::notify;
 use crate::plugins::api::Api;
 use crate::plugins::api::PullRequest as PR;
-use crate::plugins::client;
+use crate::plugins::get_client;
 
 pub struct GitHub {
     pub owner: String,
@@ -37,10 +37,11 @@ impl GitHub {
     }
 
     pub async fn execute(&self, token: &str, repo: &str) -> Result<(), anyhow::Error> {
-        let prs = client::<Vec<PullRequest>>(self.pull_requests(repo), self.headers(token)).await?;
+        let prs =
+            get_client::<Vec<PullRequest>>(self.pull_requests(repo), self.headers(token)).await?;
         for pr in prs {
             let reviews =
-                client::<Reviews>(self.reviews(repo, pr.number), self.headers(token)).await?;
+                get_client::<Reviews>(self.reviews(repo, pr.number), self.headers(token)).await?;
             reviews.users.iter().for_each(|user| {
                 if self.reviews.contains_key(user.login.as_str()) {
                     self.notify(

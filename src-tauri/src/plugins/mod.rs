@@ -15,26 +15,25 @@
  * limitations under the License.
  */
 
-use reqwest::Error;
 use std::collections::HashMap;
 
 use reqwest::header::HeaderMap;
+use reqwest::Error;
+use serde::de::DeserializeOwned;
 
 use crate::plugins::api::Api;
-
-use serde::de::DeserializeOwned;
 
 mod api;
 pub mod github;
 
-pub fn get_api(api: &str, owner: String, reviews: HashMap<String, ()>) -> Box<dyn Api> {
+pub fn get_api(api: &str, owner: String, reviews: Option<HashMap<String, ()>>) -> Box<dyn Api> {
     match api {
-        "github" => Box::new(github::GitHub::new(owner, reviews)),
+        "github" => Box::new(github::GitHub::new(owner, reviews.unwrap_or_default())),
         _ => panic!("Unsupported"),
     }
 }
 
-pub async fn client<T>(url: String, headers: HeaderMap) -> Result<T, Error>
+pub async fn get_client<T>(url: String, headers: HeaderMap) -> Result<T, Error>
 where
     T: DeserializeOwned,
 {
